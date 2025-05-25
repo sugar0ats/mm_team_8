@@ -11,7 +11,7 @@ void SysTickFunction(void) {
 	 * Anything in this function body will be executed every millisecond.
 	 * Call you PID update function here.
 	 */
-	 updatePID();
+	 updatePID(0.001);
 	
 
 

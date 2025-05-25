@@ -60,8 +60,8 @@ all: main-build
 main-build: mm_spring.elf secondary-outputs
 
 # Tool invocations
-mm_spring.elf mm_spring.map: $(OBJS) $(USER_OBJS) /Users/emmacao/STM32CubeIDE/workspace_1.16.1/mm_spring/STM32F205RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "mm_spring.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"/Users/emmacao/STM32CubeIDE/workspace_1.16.1/mm_spring/STM32F205RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="mm_spring.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+mm_spring.elf mm_spring.map: $(OBJS) $(USER_OBJS) C:\Users\priya\Documents\GitHub\mm_team_8\STM32F205RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "mm_spring.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\priya\Documents\GitHub\mm_team_8\STM32F205RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="mm_spring.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

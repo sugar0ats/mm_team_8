@@ -6,6 +6,14 @@
 #include "encoders.h"
 #include <math.h>
 
+volatile float dbg_leftCounts;
+volatile float dbg_rightCounts;
+volatile float dbg_e_dist;
+volatile float dbg_e_ang;
+volatile float dbg_distCorr;
+volatile float dbg_angCorr;
+volatile float dbg_leftSpeed;
+volatile float dbg_rightSpeed;
 
 int angleError = 0;
 int oldAngleError = 0;
@@ -18,9 +26,13 @@ int angEps = 5;
 float distEps = 3;
 float kPw = 0.03;
 float kDw = 0.0;
-float kPx = 0.5;
-float kDx = 0.0;
+float kPx = 0.005;
+float kDx = 0.05;
+float kIw = 0.0;
+float kIx = 0.0;
 int count = 0;
+static float sumAng  = 0.0;
+static float sumDist = 0.0;
 
 int withinBound = 0;
 
@@ -34,17 +46,60 @@ void resetPID(void) {
 	distanceError = 0;
 	oldAngleError = 0;
 	oldDistanceError = 0;
+	sumAng  = 0.0f;
+	sumDist = 0.0f;
 	resetEncoders();
 	resetMotors();
 	done = 0;
 
 }
 
-void updatePID() {
+void updatePID(float dt)  {
 
-    int leftEncoder = getLeftEncoderCounts();
-    int rightEncoder = getRightEncoderCounts();
+	int16_t leftEncoder  = getLeftEncoderCounts();
+	int16_t rightEncoder = getRightEncoderCounts();
+	resetEncoders();
 
+	dbg_leftCounts = leftEncoder;
+	dbg_rightCounts = rightEncoder;
+
+	    // distance measure & error
+	float distMeas = (leftEncoder + rightEncoder) * 0.5f;
+	float e_dist   = goalDistance - distMeas;
+
+	dbg_e_dist = e_dist;
+
+	    // **use** the file‐scope accumulator here, not a new one
+	sumDist       += e_dist * dt;
+	float derr_dist = (e_dist - oldDistanceError) / dt;
+
+	    // 2) angle measure & error
+	float e_ang     = goalAngle - (leftEncoder - rightEncoder);
+	    sumAng        += e_ang * dt;
+	float derr_ang  = (e_ang - oldAngleError) / dt;
+
+	dbg_e_ang = e_ang;
+
+        // PID outputs with integral terms added
+    float distCorr = kPx * e_dist + /* add:*/ kIx * sumDist + kDx * derr_dist;
+    float angCorr  = kPw * e_ang  + /* add:*/ kIw * sumAng  + kDw * derr_ang;
+
+    dbg_distCorr = distCorr;
+    dbg_angCorr = angCorr;
+
+        // combine, clamp, send to motors
+    float leftSpeed  = limitPWM(distCorr + angCorr);
+    float rightSpeed = limitPWM(distCorr - angCorr);
+
+    dbg_leftSpeed = leftSpeed;
+    dbg_rightSpeed = rightSpeed;
+
+    setMotorLPWM(leftSpeed);
+    setMotorRPWM(0.912 * rightSpeed);
+
+        // 5) save for next
+    oldDistanceError = e_dist;
+    oldAngleError    = e_ang;
 
 //    if (leftEncoder < 0) {
 //    	leftEncoder = -leftEncoder;
@@ -59,31 +114,31 @@ void updatePID() {
 //    	angleError = goalAngle - (rightEncoder + leftEncoder);
 //    }
 
-    angleError = goalAngle - (leftEncoder - rightEncoder);
-
-    float angleCorrection = kPw * angleError + kDw * (angleError - oldAngleError);
-    oldAngleError = angleError;
-    if (angleCorrection > 0.5f) {
-    	angleCorrection = 0.5f;
-    } else if (angleCorrection < -0.5f) {
-    	angleCorrection = -0.5f;
-    }
-
-    distanceError = goalDistance - (rightEncoder + leftEncoder) / 2.0;
-
-    float distanceCorrection = kPx * distanceError + kDx * (distanceError - oldDistanceError);
-    oldDistanceError = distanceError;
-
-    // capping distance
-    if (distanceCorrection > 0.5f) {
-    	distanceCorrection = 0.5f;
-    } else if (distanceCorrection < -0.5f) {
-    	distanceCorrection = -0.5f;
-    }
-
-
-    float leftSpeed = distanceCorrection + angleCorrection;
-    float rightSpeed = distanceCorrection - angleCorrection;
+//    angleError = goalAngle - (leftEncoder - rightEncoder);
+//
+//    float angleCorrection = kPw * angleError + kDw * (angleError - oldAngleError);
+//    oldAngleError = angleError;
+//    if (angleCorrection > 0.5f) {
+//    	angleCorrection = 0.5f;
+//    } else if (angleCorrection < -0.5f) {
+//    	angleCorrection = -0.5f;
+//    }
+//
+//    distanceError = goalDistance - (rightEncoder + leftEncoder) / 2.0;
+//
+//    float distanceCorrection = kPx * distanceError + kDx * (distanceError - oldDistanceError);
+//    oldDistanceError = distanceError;
+//
+//    // capping distance
+//    if (distanceCorrection > 0.5f) {
+//    	distanceCorrection = 0.5f;
+//    } else if (distanceCorrection < -0.5f) {
+//    	distanceCorrection = -0.5f;
+//    }
+//
+//
+//    float leftSpeed = distanceCorrection + angleCorrection;
+//    float rightSpeed = distanceCorrection - angleCorrection;
 
 //     float leftSpeed = angleCorrection;
 //     float rightSpeed = -angleCorrection;
@@ -95,10 +150,10 @@ void updatePID() {
 //    }
 
     // capping angle
-     if (goalAngle != 0 || goalDistance != 0) {
-    	 if (fabs(angleError) < angEps && fabs(distanceError) < distEps) {
-    		 done = 1;
-    	 }
+//     if (goalAngle != 0 || goalDistance != 0) {
+//    	 if (fabs(angleError) < angEps && fabs(distanceError) < distEps) {
+//    		 done = 1;
+//    	 }
 //    	 if (angleError < 0) {
 //    	     	 if (-1 * angleError < angEps) {
 //    	     		 count++;
@@ -116,9 +171,9 @@ void updatePID() {
      }
 
 
-    setMotorLPWM(leftSpeed);
-    setMotorRPWM(rightSpeed);
-}
+//    setMotorLPWM(leftSpeed);
+//    setMotorRPWM(rightSpeed);
+//
 
 void setPIDGoalD(int16_t distance) {
 	/*

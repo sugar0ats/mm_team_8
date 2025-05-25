@@ -130,10 +130,10 @@ int main(void)
 //
 //  setMotorLPWM(1.8f);
 //  setMotorRPWM(1.8f);
-//  move(3);
+//  move(1);
 //  turn(-1);
 //  move(3);
-//  turn(1);
+turn(1);
 //  move(1);
   /* USER CODE END 2 */
 

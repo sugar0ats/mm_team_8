@@ -8,7 +8,7 @@
 #include "main.h"
 
 void resetPID(void);
-void updatePID(void);
+void updatePID(float dt);
 void setPIDGoalD(int16_t distance);
 void setPIDGoalA(int16_t angle);
 int8_t PIDdone(void); // There is no bool type in C. True/False values are represented as 1 or 0.

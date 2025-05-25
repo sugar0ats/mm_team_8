@@ -19,7 +19,7 @@ void move(int8_t n) {
 	 *
 	 * You should also call resetPID before exiting this function so your rat is ready for the next instruction.
 	 */
-	setPIDGoalD(-430.0 * n);
+	setPIDGoalD(+430.0f * n);
 	setPIDGoalA(0.0);
 	while (!PIDdone()) {
 //		updatePID();
