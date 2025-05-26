@@ -18,10 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "encoders.h"
-#include "motors.h"
-#include "controller.h"
-#include "pid.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -55,6 +51,10 @@ TIM_HandleTypeDef htim4;
 /* USER CODE BEGIN PV */
 int16_t left_counts = 0;
 int16_t right_counts = 0;
+uint16_t left_em = 0;
+uint16_t fl_em = 0;
+uint16_t fr_em = 0;
+uint16_t right_em = 0;
 
 /* USER CODE END PV */
 
@@ -94,6 +94,8 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+  Delay_Init();
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -129,11 +131,13 @@ int main(void)
   // 2 and 4: backwards
 //
 //  setMotorLPWM(1.8f);
-//  setMotorRPWM(1.8f);
+//  setMotorRPWM(-1.8f);
+//  HAL_Delay(1000);
 //  move(1);
-//  turn(-1);
+//  HAL_Delay(1000);
+//  turn(1);
 //  move(3);
-turn(1);
+//  turn(1);
 //  move(1);
   /* USER CODE END 2 */
 
@@ -143,6 +147,13 @@ turn(1);
   {
 	  left_counts = (int16_t) TIM1->CNT;
 	  right_counts = (int16_t) TIM2->CNT;
+	  left_em = readLeftIR();
+//	  left_em = 5;
+	  fl_em = readFrontLeftIR();
+	  fr_em = readFrontRightIR();
+	  right_em = readRightIR();
+
+
 
 //	  HAL_GPIO_WritePin(Test_GPIO_Port, Test_Pin, GPIO_PIN_SET);
 
@@ -530,6 +541,11 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+ADC_HandleTypeDef* Get_HADC1_Ptr(void)
+{
+	return &hadc1;
+}
 
 
 /* USER CODE END 4 */

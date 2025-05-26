@@ -56,6 +56,8 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
+ADC_HandleTypeDef* Get_HADC1_Ptr(void);
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

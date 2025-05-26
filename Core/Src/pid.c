@@ -22,12 +22,12 @@ float oldDistanceError = 0.0; //distanceError
 
 int angFlag = 0;
 int disFlag = 0;
-int angEps = 5;
-float distEps = 3;
-float kPw = 0.03;
-float kDw = 0.0;
+int angEps = 25;
+float distEps = 40;
+float kPw = 0.0007;
+float kDw = 0.00015;
 float kPx = 0.005;
-float kDx = 0.05;
+float kDx = 0.0006;
 float kIw = 0.0;
 float kIx = 0.0;
 int count = 0;
@@ -41,6 +41,7 @@ int goalDistance = 0;
 int8_t done = 0;
 
 void resetPID(void) {
+	goalDistance = 0;
 	count = 0;
 	angleError = 0;
 	distanceError = 0;
@@ -57,8 +58,8 @@ void resetPID(void) {
 void updatePID(float dt)  {
 
 	int16_t leftEncoder  = getLeftEncoderCounts();
-	int16_t rightEncoder = getRightEncoderCounts();
-	resetEncoders();
+	int16_t rightEncoder = -getRightEncoderCounts();
+//	resetEncoders();
 
 	dbg_leftCounts = leftEncoder;
 	dbg_rightCounts = rightEncoder;
@@ -84,18 +85,59 @@ void updatePID(float dt)  {
     float distCorr = kPx * e_dist + /* add:*/ kIx * sumDist + kDx * derr_dist;
     float angCorr  = kPw * e_ang  + /* add:*/ kIw * sumAng  + kDw * derr_ang;
 
+    if (goalAngle == 0) {
+    	angCorr = 0;
+    } else {
+    	if (angCorr > 0.55f) {
+    	        	angCorr = 0.55f;
+    	        } else if (angCorr < -0.55f) {
+    	        	angCorr = -0.55f;
+    	        }
+    }
+
+         if (goalDistance != 0) {
+        	 if (fabs(e_dist) < distEps) {
+        		 done = 1;
+         }
+
+
+//        	 if (angleError < 0) {
+//        	     	 if (-1 * angleError < angEps) {
+//        	     		 count++;
+//        	     	 } else {
+//        	     		 count = 0;
+//        	     	 }
+//        	      } else {
+//        	     	 if (angleError < angEps) {
+//        	     		 count++;
+//        	     	 } else {
+//        	     		 count = 0;
+//        	     	 }
+//        	      }
+
+         }
+
+         if (goalAngle != 0) {
+                 	         	 if (fabs(e_dist) < angEps) {
+                 	         		 done = 1;
+                 	          }
+                 	 }
+
+    // change 1: commented out angCorr
+//    float angCorr = 0.0f;
+
     dbg_distCorr = distCorr;
     dbg_angCorr = angCorr;
 
         // combine, clamp, send to motors
-    float leftSpeed  = limitPWM(distCorr + angCorr);
-    float rightSpeed = limitPWM(distCorr - angCorr);
+    float leftSpeed  = limitPWM(distCorr - angCorr);
+    float rightSpeed = limitPWM(distCorr + angCorr);
 
     dbg_leftSpeed = leftSpeed;
     dbg_rightSpeed = rightSpeed;
 
     setMotorLPWM(leftSpeed);
-    setMotorRPWM(0.912 * rightSpeed);
+    setMotorRPWM(rightSpeed);
 
         // 5) save for next
     oldDistanceError = e_dist;

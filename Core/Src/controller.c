@@ -35,9 +35,9 @@ void turn(int8_t n) {
 
 	setPIDGoalD(0.0);
 	if (n == 1) {
-		setPIDGoalA(-293.0 * 2); // -215
+		setPIDGoalA(-287.0 * 2); // -215
 	} else {
-		setPIDGoalA(293.0 * 2);
+		setPIDGoalA(287.0 * 2);
 	}
 
 	while (!PIDdone()) {
